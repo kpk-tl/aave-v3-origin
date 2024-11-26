@@ -70,6 +70,11 @@ interface ICollector {
    **/
   function ACL_MANAGER() external pure returns (address);
 
+  /** @notice Returns the FUNDS_ADMIN_ROLE role
+   * @return address The role key
+   **/
+  function FUNDS_ADMIN_ROLE() external pure returns (bytes32);
+
   /** @notice Initializes the contracts
    * @param fundsAdmin The address of the funds admin
    * @param nextStreamId StreamId to set, applied if greater than 0
