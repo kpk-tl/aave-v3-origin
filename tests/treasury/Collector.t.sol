@@ -145,6 +145,10 @@ contract CollectorTest is Test {
   address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
   address public constant RECIPIENT_STREAM_1 = 0xd3B5A38aBd16e2636F1e94D1ddF0Ffb4161D5f10;
 
+  address public constant PROXY_ADMIN = 0xD3cF979e676265e4f6379749DECe4708B9A22476;
+  TransparentUpgradeableProxy public constant COLLECTOR_PROXY =
+    TransparentUpgradeableProxy(payable(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c));
+
   address public FUNDS_ADMIN;
 
   uint256 public streamStartTime;
@@ -193,14 +197,19 @@ contract CollectorTest is Test {
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
-    collector = new Collector();
-    collector.initialize(ACL_MANAGER, 100000);
+    FUNDS_ADMIN = makeAddr('funds-admin');
+
+    Collector newCollector = new Collector();
+    newCollector.initialize(FUNDS_ADMIN, 100051);
+
+    collector = Collector(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c);
     deal(address(AAVE), address(collector), 10 ether);
+
+    vm.prank(EXECUTOR_LVL_1);
+    ProxyAdmin(PROXY_ADMIN).upgrade(COLLECTOR_PROXY, address(newCollector));
 
     streamStartTime = block.timestamp + 10;
     streamStopTime = block.timestamp + 70;
-
-    FUNDS_ADMIN = makeAddr('funds-admin');
 
     vm.startPrank(EXECUTOR_LVL_1);
     IAccessControl(ACL_MANAGER).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
@@ -208,9 +217,9 @@ contract CollectorTest is Test {
     vm.stopPrank();
   }
 
-  function testGetFundsAdmin_isZeroAddressOnNewVersion() public view {
+  function testGetFundsAdmin_isEqualToPassedFundsAdmin() public view {
     address fundsAdmin = collector.getFundsAdmin();
-    assertEq(fundsAdmin, address(0));
+    assertEq(fundsAdmin, FUNDS_ADMIN);
   }
 
   function testApprove() public {

@@ -16,11 +16,6 @@ interface ICollector {
     bool isEntity;
   }
 
-  /** @notice Emitted during the switch of the ACL Manager contract address
-   * @param manager The new ACL Manager contract address.
-   **/
-  event NewACLManager(address indexed manager);
-
   /** @notice Emitted when the new stream is created
    * @param streamId The identifier of the stream.
    * @param sender The address of the collector.
@@ -69,11 +64,21 @@ interface ICollector {
    **/
   function ETH_MOCK_ADDRESS() external pure returns (address);
 
+  /** @notice Returns the ACL MANAGER address
+   * @return address The address
+   **/
+  function ACL_MANAGER() external pure returns (address);
+
+  /** @notice Returns the FUNDS_ADMIN_ROLE role
+   * @return address The role key
+   **/
+  function FUNDS_ADMIN_ROLE() external pure returns (bytes32);
+
   /** @notice Initializes the contracts
-   * @param aclManager The address of the ACL Manager
+   * @param fundsAdmin The address of the funds admin
    * @param nextStreamId StreamId to set, applied if greater than 0
    **/
-  function initialize(address aclManager, uint256 nextStreamId) external;
+  function initialize(address fundsAdmin, uint256 nextStreamId) external;
 
   /**
    * @notice Return the funds admin, only entity to be able to interact with this contract (controller of reserve)
@@ -110,13 +115,6 @@ interface ICollector {
    * @param amount Amount to transfer
    **/
   function transfer(IERC20 token, address recipient, uint256 amount) external;
-
-  /**
-   * @dev Switch ACL Manager contract address.
-          This function should only be callable by the current funds administrator.
-   * @param manager The address of the new ACL Manager contract address
-   */
-  // function setACLManager(address manager) external;
 
   /**
    * @notice Creates a new stream funded by this contracts itself and paid towards `recipient`.
