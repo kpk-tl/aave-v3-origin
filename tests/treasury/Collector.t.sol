@@ -23,6 +23,7 @@ contract CollectorTest is Test {
 
   uint256 public streamStartTime;
   uint256 public streamStopTime;
+  uint256 public startStreamID;
 
   event NewACLManager(address indexed manager);
   event NewFundsAdmin(address indexed fundsAdmin);
@@ -68,7 +69,8 @@ contract CollectorTest is Test {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
     collector = new Collector();
-    collector.initialize(ACL_MANAGER, 100000);
+    startStreamID = 100;
+    collector.initialize(address(0), startStreamID);
     deal(address(AAVE), address(collector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
@@ -120,12 +122,12 @@ contract CollectorTest is Test {
 contract StreamsTest is CollectorTest {
   function testGetNextStreamId() public view {
     uint256 streamId = collector.getNextStreamId();
-    assertEq(streamId, 100000);
+    assertEq(streamId, startStreamID);
   }
 
   function testGetNotExistingStream() public {
     vm.expectRevert(bytes('stream does not exist'));
-    collector.getStream(100000);
+    collector.getStream(startStreamID);
   }
 
   // create stream
@@ -133,7 +135,7 @@ contract StreamsTest is CollectorTest {
     vm.expectEmit(true, true, true, true);
 
     emit CreateStream(
-      100000,
+      startStreamID,
       address(collector),
       RECIPIENT_STREAM_1,
       6 ether,
@@ -145,7 +147,7 @@ contract StreamsTest is CollectorTest {
     vm.startPrank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    assertEq(streamId, 100000);
+    assertEq(streamId, startStreamID);
 
     (
       address sender,
@@ -310,7 +312,7 @@ contract StreamsTest is CollectorTest {
   function testWithdrawFromStreamWhenStreamNotExists() public {
     vm.expectRevert(bytes('stream does not exist'));
 
-    collector.withdrawFromStream(100000, 1 ether);
+    collector.withdrawFromStream(startStreamID, 1 ether);
   }
 
   function testWithdrawFromStreamWhenNotAdminOrRecipient() public {
@@ -395,7 +397,7 @@ contract StreamsTest is CollectorTest {
   function testCancelStreamWhenStreamNotExists() public {
     vm.expectRevert(bytes('stream does not exist'));
 
-    collector.cancelStream(100000);
+    collector.cancelStream(startStreamID);
   }
 
   function testCancelStreamWhenNotAdminOrRecipient() public {
@@ -432,27 +434,6 @@ contract FundsAdminRoleBytesTest is CollectorTest {
   }
 }
 
-contract SetACLManagerTest is CollectorTest {
-  function test_revertsIf_invalidCaller() public {
-    vm.expectRevert('ONLY_BY_FUNDS_ADMIN');
-    collector.setACLManager(makeAddr('new-acl'));
-  }
-
-  function test_revertsIf_zeroAddress() public {
-    vm.startPrank(FUNDS_ADMIN);
-    vm.expectRevert('cannot be the zero-address');
-    collector.setACLManager(address(0));
-  }
-
-  function test_successful() public {
-    address newAcl = makeAddr('new-acl');
-
-    vm.startPrank(FUNDS_ADMIN);
-    vm.expectEmit(true, true, true, true, address(collector));
-    emit NewACLManager(newAcl);
-    collector.setACLManager(newAcl);
-  }
-}
 
 contract IsFundsAdminTest is CollectorTest {
   function test_isNotFundsAdmin() public {
