@@ -51,7 +51,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /**
    * @notice Address of the current ACL Manager.
    */
-  address internal _aclManager;
+  address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
 
   /// @inheritdoc ICollector
   address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -99,7 +99,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
       _nextStreamId = nextStreamId;
     }
 
-    _setACLManager(aclManager);
+    // _setACLManager(aclManager);
   }
 
   /*** View Functions ***/
@@ -116,7 +116,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
 
   /// @inheritdoc ICollector
   function isFundsAdmin(address admin) external view returns (bool) {
-    return IAccessControl(_aclManager).hasRole(FUNDS_ADMIN_ROLE, admin);
+    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc ICollector
@@ -220,23 +220,23 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     }
   }
 
-  /// @inheritdoc ICollector
-  function setACLManager(address manager) external onlyFundsAdmin {
-    _setACLManager(manager);
-  }
+  // /// @inheritdoc ICollector
+  // function setACLManager(address manager) external onlyFundsAdmin {
+  //   _setACLManager(manager);
+  // }
 
-  /**
-   * @dev Switch ACL Manager contract address.
-   * @param manager The address of the new ACL Manager contract address
-   */
-  function _setACLManager(address manager) internal {
-    require(manager != address(0), 'cannot be the zero-address');
-    _aclManager = manager;
-    emit NewACLManager(manager);
-  }
+  // /**
+  //  * @dev Switch ACL Manager contract address.
+  //  * @param manager The address of the new ACL Manager contract address
+  //  */
+  // function _setACLManager(address manager) internal {
+  //   require(manager != address(0), 'cannot be the zero-address');
+  //   _aclManager = manager;
+  //   emit NewACLManager(manager);
+  // }
 
   function _onlyFundsAdmins() internal view returns (bool) {
-    return IAccessControl(_aclManager).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
   struct CreateStreamLocalVars {

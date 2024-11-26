@@ -81,7 +81,7 @@ interface ICollector {
    **/
   function getFundsAdmin() external view returns (address);
 
-    /**
+  /**
    * @notice Checks if address is funds admin
    * @return bool If the address has the funds admin role
    **/
@@ -116,7 +116,7 @@ interface ICollector {
           This function should only be callable by the current funds administrator.
    * @param manager The address of the new ACL Manager contract address
    */
-  function setACLManager(address manager) external;
+  // function setACLManager(address manager) external;
 
   /**
    * @notice Creates a new stream funded by this contracts itself and paid towards `recipient`.
