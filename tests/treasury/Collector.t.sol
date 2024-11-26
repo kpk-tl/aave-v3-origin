@@ -23,6 +23,10 @@ contract UpgradeCollectorTest is Test {
   uint256 public streamStartTime;
   uint256 public streamStopTime;
 
+  address public constant PROXY_ADMIN = 0xD3cF979e676265e4f6379749DECe4708B9A22476;
+  TransparentUpgradeableProxy public constant COLLECTOR_PROXY =
+    TransparentUpgradeableProxy(payable(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c));
+
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'), 21262170);
 
@@ -72,6 +76,60 @@ contract UpgradeCollectorTest is Test {
 
     vm.load(address(originalCollector), dataValueSlot);
     vm.load(address(newCollector), dataValueSlotNew);
+  }
+
+  function test_slots_upgrade() public {
+    vm.startMappingRecording();
+
+    vm.prank(EXECUTOR_LVL_1);
+    originalCollector.createStream(
+      RECIPIENT_STREAM_1,
+      6 ether,
+      address(AAVE),
+      streamStartTime,
+      streamStopTime
+    );
+
+    {
+      bytes32 dataSlot = bytes32(uint256(55));
+      bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
+
+      vm.getMappingLength(address(originalCollector), dataSlot);
+      vm.load(address(originalCollector), dataValueSlot);
+
+      (
+        address sender,
+        address recipient,
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime,
+        uint256 remainingBalance,
+
+      ) = originalCollector.getStream(100050);
+    }
+
+    vm.prank(EXECUTOR_LVL_1);
+    ProxyAdmin(PROXY_ADMIN).upgrade(COLLECTOR_PROXY, address(newCollector));
+
+    {
+      bytes32 dataSlot = bytes32(uint256(55));
+      bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
+
+      vm.getMappingLength(address(originalCollector), dataSlot);
+      vm.load(address(originalCollector), dataValueSlot);
+
+      (
+        address sender,
+        address recipient,
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime,
+        uint256 remainingBalance,
+
+      ) = originalCollector.getStream(100050);
+    }
   }
 }
 
