@@ -28,7 +28,7 @@ contract UpgradeCollectorTest is Test {
     TransparentUpgradeableProxy(payable(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c));
 
   function setUp() public {
-    vm.createSelectFork(vm.rpcUrl('mainnet'), 21262170);
+    vm.createSelectFork(vm.rpcUrl('mainnet'));
 
     originalCollector = Collector(COLLECTOR_ADDRESS);
     newCollector = new Collector();
@@ -200,13 +200,13 @@ contract CollectorTest is Test {
     FUNDS_ADMIN = makeAddr('funds-admin');
 
     Collector newCollector = new Collector();
-    newCollector.initialize(FUNDS_ADMIN, 100051);
 
     collector = Collector(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c);
     deal(address(AAVE), address(collector), 10 ether);
 
     vm.prank(EXECUTOR_LVL_1);
     ProxyAdmin(PROXY_ADMIN).upgrade(COLLECTOR_PROXY, address(newCollector));
+    collector.initialize(FUNDS_ADMIN, collector.getNextStreamId());
 
     streamStartTime = block.timestamp + 10;
     streamStopTime = block.timestamp + 70;
@@ -255,12 +255,12 @@ contract CollectorTest is Test {
 contract StreamsTest is CollectorTest {
   function testGetNextStreamId() public view {
     uint256 streamId = collector.getNextStreamId();
-    assertEq(streamId, 100000);
+    assertEq(streamId, 100051);
   }
 
   function testGetNotExistingStream() public {
     vm.expectRevert(bytes('stream does not exist'));
-    collector.getStream(100000);
+    collector.getStream(100051);
   }
 
   // create stream
@@ -268,7 +268,7 @@ contract StreamsTest is CollectorTest {
     vm.expectEmit(true, true, true, true);
 
     emit CreateStream(
-      100000,
+      100051,
       address(collector),
       RECIPIENT_STREAM_1,
       6 ether,
@@ -280,7 +280,7 @@ contract StreamsTest is CollectorTest {
     vm.startPrank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    assertEq(streamId, 100000);
+    assertEq(streamId, 100051);
 
     (
       address sender,
@@ -445,7 +445,7 @@ contract StreamsTest is CollectorTest {
   function testWithdrawFromStreamWhenStreamNotExists() public {
     vm.expectRevert(bytes('stream does not exist'));
 
-    collector.withdrawFromStream(100000, 1 ether);
+    collector.withdrawFromStream(100051, 1 ether);
   }
 
   function testWithdrawFromStreamWhenNotAdminOrRecipient() public {
@@ -530,7 +530,7 @@ contract StreamsTest is CollectorTest {
   function testCancelStreamWhenStreamNotExists() public {
     vm.expectRevert(bytes('stream does not exist'));
 
-    collector.cancelStream(100000);
+    collector.cancelStream(100051);
   }
 
   function testCancelStreamWhenNotAdminOrRecipient() public {
